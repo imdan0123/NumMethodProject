@@ -87,17 +87,30 @@ for t=2:Nsteps
     end
     
     %now for all vines
-    for i=1:NpX
-        for j=1:NpY
-            cnt=i+(j-1)*NpX; %index counter for vectorized vine structure
-            
-            %check if vines have just become latent, if so calculate mu_L 
-            %and flip their LatentSwitch so that the calc only happens 1 time.
-            if((vine(cnt).L(t-1) > 1e-8) && (vine(cnt).LatentSwitch == false))
-                vine(cnt).mu_L = latentperiod(t,dt,Nsteps,mu_L_target,...
-                    zeros(size(T)),T);
-                vine(cnt).LatentSwitch = true;
-            end
+%     for i=1:NpX
+%         for j=1:NpY
+%             cnt=i+(j-1)*NpX; %index counter for vectorized vine structure
+%             
+%             %check if vines have just become latent, if so calculate mu_L 
+%             %and flip their LatentSwitch so that the calc only happens 1 time.
+%             if((vine(cnt).L(t-1) > 1e-8) && (vine(cnt).LatentSwitch == false))
+%                 vine(cnt).mu_L = latentperiod(t,dt,Nsteps,mu_L_target,...
+%                     zeros(size(T)),T);
+%                 vine(cnt).LatentSwitch = true;
+%             end
+% Initialize plant area with variability
+for i = 1:NpX
+    for j = 1:NpY
+        cnt = i + (j-1) * NpX;
+        
+        % Calculate variability based on a normal distribution
+        variability = 0.2 * P_i_ave * randn;
+        
+        % Initialize plant area with variability
+        vine(cnt).P(t-1) = P_i_ave + variability;
+
+        % Other initializations...
+    
 
             % set initial conditions for time integration (could use deal here)
             y0(1) = vine(cnt).B(t-1); %(amount of population, surface area, that is berries)
@@ -120,8 +133,6 @@ for t=2:Nsteps
             %your routine can be more general than that but recognize that
             %this point is in the middle of a time loop!
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-            [y] = TimeInt(odefun, t, dt, y0, DepFlux_sum(cnt), vine(cnt).mu_L);
 
             % set outputs
             vine(cnt).B(t) = y(1);
@@ -150,39 +161,6 @@ for t=2:Nsteps
     %%%        RECOMMENDED LOCATION FOR YOUR SCOUTING ROUTINE           %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    if 
-        scout_cnt = scout_cnt+1; %update our scouting storage counter
-        for sc = 1:Scout.Nsens %for each scout
-            switch lower(Scout.Type)
-
-                case 'random'
-                    PosToScout = randperm(Sout.Numpts); %pick random plants to scout
-                    %initialize time counter and position
-                    SX = 0; SY = 0; ScTime = 0;
-
-                        for idx = 1:Scout.Numpts
-                            ScDistance = sqrt((Sx-vine(PosToScout(idx)).X)^2 + ...
-                                (SY-vine(PosToScout(idx)).Y)^2);
-                            %update time and position
-                            ScTime = ScTime + ScDistance/Scout.Speed;
-                            SX = vine(PosToScout(idx)).X;
-                            SY = vine(posToScout(Idx)).Y;
-                            
-                            if(ScTime <= 3600)%as  long as we still have time
-                                InfectSize = vine(PosToScout(idx)).L(t)*A;
-                                ScoutSize = max([(40*Scout.Speed)^2/4*pi pi]);
-                                if(InfectSize >= ScoutSize)
-                                    Scout.Success(sc, scout_cnt) = true;
-                                    return %stop if success
-                                end
-                            else
-                                break
-                            end
-                        end
-            end
-        end
-
 
 end
 
