@@ -106,6 +106,24 @@ function dydt = Pl_model(P, T, E, mu_L, dt, mu_I, I)
     dydt = mu_L^(-1) * L - mu_I^(-1) * I;
 end
 
+function [cost] = CostCalc(Scout)
+    penaltyday = 10; % 1st day to start counting
+    
+    %find first successful day of scouting
+    day = find(sum(Scout.Success,1)>0,1);
+    
+    % if not found, cost is max
+    if(isempty(day))
+        day = 61;
+    end
+    if(day<penaltyday)
+        cost = Scout.NSens * Scout.HrCost * day;
+    else
+        cost = Scout.NSens * Scout.HrCost * day + (day-penaltyday) * Scout.DayCost;
+    end
+end
+
+
 % 
 % 
 % 
